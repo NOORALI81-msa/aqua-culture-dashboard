@@ -1,0 +1,77 @@
+{% extends 'layout.html' %}
+
+{% block title %}Profile & Daily Status{% endblock %}
+
+{% block content %}
+<!-- Static Profile Information -->
+<div class="content-block">
+    <h2>Your Profile</h2>
+    {% if account %}
+    <table class="styled-table">
+        <tbody>
+            <tr><td><strong>Username:</strong></td><td>{{ account['username'] }}</td></tr>
+            <tr><td><strong>Role:</strong></td><td>{{ account['role'] }}</td></tr>
+            <tr><td><strong>Head Quarter:</strong></td><td>{{ account['head_quarter'] }}</td></tr>
+            <tr><td><strong>Status:</strong></td><td><span class="status-pill status-{{ account['status'] }}">{{ account['status'] }}</span></td></tr>
+        </tbody>
+    </table>
+    {% else %}
+    <p>Could not retrieve account details.</p>
+    {% endif %}
+</div>
+
+<!-- Daily Route Tracking Section -->
+<div class="content-block">
+    <h2>Daily Route Tracking for {{ now.strftime('%Y-%m-%d') }}</h2>
+    <p>Add a new location segment you have visited today.</p>
+    
+    <!-- Form to add a new route segment -->
+    <form action="{{ url_for('profile') }}" method="post" class="styled-form">
+        <div class="form-group">
+            <label for="location">New Location Visited</label>
+            <input type="text" name="location" id="location" placeholder="e.g., Chittoor Town" required>
+        </div>
+        <div class="form-group">
+            <label for="kms_covered">KMs for this Segment</label>
+            <input type="number" name="kms_covered" id="kms_covered" placeholder="e.g., 15" required>
+        </div>
+        <input type="submit" value="Add Route Segment">
+        {% if msg %}<p class="msg" style="color: green;">{{ msg }}</p>{% endif %}
+    </form>
+</div>
+
+<!-- Display today's route segments -->
+<div class="content-block">
+    <h3>Today's Route</h3>
+    <div class="table-container">
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Location Segment</th>
+                    <th>KMs Covered</th>
+                    <th>Time Entered</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for route in daily_routes %}
+                <tr>
+                    <td>{{ route.location_segment }}</td>
+                    <td>{{ route.kms_segment }}</td>
+                    <td>{{ route.entry_time.strftime('%I:%M %p') }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" style="text-align: center;">No route segments added for today.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr style="font-weight: bold; background-color: #f0f0f0;">
+                    <td>Total Kilometers Today:</td>
+                    <td colspan="2">{{ total_kms_today }} KM</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% endblock %}

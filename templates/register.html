@@ -1,0 +1,32 @@
+{% extends 'layout.html' %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <h1>Employee Registration</h1>
+    <div class="auth-links">
+        <a href="{{ url_for('login') }}">Login</a>
+        <a href="{{ url_for('register') }}" class="active">Register</a>
+    </div>
+    <form action="{{ url_for('register') }}" method="post" autocomplete="off" class="auth-form">
+        <div class="input-group">
+            <i class="fas fa-user"></i>
+            <input type="text" name="username" placeholder="Username" id="username" required>
+        </div>
+        <div class="input-group">
+            <i class="fas fa-lock"></i>
+            <input type="password" name="password" placeholder="Password" id="password" required>
+        </div>
+        <div class="input-group">
+            <i class="fas fa-building"></i>
+            <input type="text" name="head_quarter" placeholder="Head Quarter" id="head_quarter" required>
+        </div>
+        <!-- Role selection has been removed for security -->
+        {% if msg %}
+        <p class="msg">{{ msg }}</p>
+        {% endif %}
+        <input type="submit" value="Register">
+    </form>
+</div>
+{% endblock %}

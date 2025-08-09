@@ -1,0 +1,374 @@
+/* static/style.css */
+
+/* --- Google Font & Global Resets --- */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+:root {
+    --primary-color: #3498db;
+    --primary-hover: #2980b9;
+    --background-color: #f4f7f6;
+    --surface-color: #ffffff;
+    --text-color: #34495e;
+    --border-color: #dee0e4;
+    --success-color: #2ecc71;
+    --danger-color: #e74c3c;
+    --inactive-color: #95a5a6;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+/* --- Navigation Bar --- */
+.navtop {
+    background-color: var(--surface-color);
+    padding: 0 5vw;
+    height: 70px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.navtop div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 1400px;
+}
+
+.navtop h1 {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+.navtop a {
+    color: var(--text-color);
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: background-color 0.3s, color 0.3s;
+    font-weight: 500;
+}
+
+.navtop a:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.navtop a i {
+    margin-right: 8px;
+}
+
+/* --- Main Content Layout --- */
+.content {
+    width: 90%;
+    max-width: 1400px;
+    margin: 30px auto;
+}
+
+.content-block {
+    background-color: var(--surface-color);
+    padding: 25px;
+    margin-bottom: 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+h2 {
+    margin-bottom: 20px;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+h3 {
+    margin-bottom: 15px;
+    font-weight: 500;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+/* --- Login & Register Forms --- */
+.auth-container {
+    max-width: 450px;
+    margin: 50px auto;
+    padding: 30px;
+    background: var(--surface-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.auth-container h1 {
+    margin-bottom: 20px;
+}
+
+.auth-links {
+    margin-bottom: 25px;
+}
+
+.auth-links a {
+    text-decoration: none;
+    color: var(--inactive-color);
+    padding: 10px 15px;
+    font-weight: 500;
+}
+
+.auth-links a.active {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.input-group {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+
+.input-group i {
+    padding: 12px;
+    background-color: #f8f9fa;
+    color: var(--inactive-color);
+    border-right: 1px solid var(--border-color);
+}
+
+.auth-form input, .auth-form select {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    background: transparent;
+    outline: none;
+}
+
+.auth-form input[type="submit"] {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: background-color 0.3s;
+}
+
+.auth-form input[type="submit"]:hover {
+    background-color: var(--primary-hover);
+}
+
+.msg {
+    color: var(--danger-color);
+    margin-top: 10px;
+}
+
+/* --- Styled Forms (for inside pages) --- */
+.styled-form {
+    display: grid;
+    gap: 15px;
+}
+
+.styled-form input[type="text"],
+.styled-form input[type="password"],
+.styled-form input[type="number"],
+.styled-form input[type="file"],
+.styled-form select,
+.styled-form textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+
+.styled-form input[type="submit"] {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    justify-self: start;
+}
+.styled-form input[type="submit"]:hover {
+    background-color: var(--primary-hover);
+}
+
+/* --- Responsive Tables --- */
+.table-container {
+    overflow-x: auto; /* Enables horizontal scrolling on small screens */
+}
+
+.styled-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+
+.styled-table thead tr {
+    background-color: var(--primary-color);
+    color: #ffffff;
+    text-align: left;
+}
+
+.styled-table th, .styled-table td {
+    padding: 12px 15px;
+    white-space: nowrap; /* Prevents text wrapping */
+}
+
+.styled-table tbody tr {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.styled-table tbody tr:nth-of-type(even) {
+    background-color: #f8f9fa;
+}
+
+/* --- Status Pills & Buttons --- */
+.status-pill {
+    padding: 5px 12px;
+    border-radius: 15px;
+    color: white;
+    font-size: 0.85em;
+    font-weight: 500;
+    text-transform: capitalize;
+}
+.status-active { background-color: var(--success-color); }
+.status-inactive { background-color: var(--inactive-color); }
+.status-deactivated { background-color: #f39c12; }
+
+/* --- Dashboard Specific --- */
+.metrics-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.metric-card {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    border-left: 5px solid var(--primary-color);
+}
+
+.metric-card h4 {
+    margin-bottom: 10px;
+    font-size: 1rem;
+    color: var(--inactive-color);
+}
+
+.metric-card p {
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.charts-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 30px;
+}
+
+/* --- Media Queries for Responsiveness --- */
+@media (min-width: 768px) {
+    .charts-container {
+        grid-template-columns: 1fr 1fr;
+    }
+    .styled-form {
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    .styled-form input[type="submit"], .styled-form textarea {
+        grid-column: 1 / -1; /* Make submit button and textarea span full width */
+    }
+}
+
+@media (max-width: 600px) {
+    .navtop {
+        flex-direction: column;
+        height: auto;
+        padding: 15px;
+    }
+    .navtop div {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .navtop a {
+        width: 100%;
+        text-align: center;
+    }
+}
+/* Add these styles to the end of your style.css */
+
+.kpi-card {
+    background-color: var(--surface-color);
+    padding: 20px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-decoration: none;
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
+
+.kpi-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.08);
+}
+
+.kpi-icon {
+    font-size: 2.5rem;
+    padding: 20px;
+    border-radius: 50%;
+    color: white;
+    width: 70px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.kpi-icon.bg-blue { background-color: #3498db; }
+.kpi-icon.bg-green { background-color: #2ecc71; }
+.kpi-icon.bg-orange { background-color: #f39c12; }
+.kpi-icon.bg-purple { background-color: #9b59b6; }
+
+.kpi-info h4 {
+    margin: 0 0 5px 0;
+    font-size: 1rem;
+    color: var(--inactive-color);
+    font-weight: 500;
+    border: none;
+    padding: 0;
+}
+
+.kpi-info p {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+/* Update metrics container for the new cards */
+.metrics-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}

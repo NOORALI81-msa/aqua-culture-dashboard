@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Test - Final Attempt</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 1000px;
+            border-radius: 8px;
+        }
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        #popupMap {
+            height: 70vh;
+            width: 100%;
+            background-color: #eee; /* Added a background color to see it easily */
+        }
+        .map-button {
+            background-color: #28a745; /* Green button */
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Map Functionality Test</h2>
+    <p>This is the final test to see if the map can be zoomed and moved.</p>
+    <button id="openMapBtn" class="map-button">View Final Test Map</button>
+
+    <div id="mapModal" class="modal">
+      <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h3>Movable Map Test</h3>
+        <div id="popupMap"></div>
+      </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const mapModal = document.getElementById('mapModal');
+            const openMapBtn = document.getElementById('openMapBtn');
+            const closeBtn = document.querySelector('.close-btn');
+            let map = null;
+
+            openMapBtn.addEventListener('click', function() {
+                mapModal.style.display = 'flex';
+                
+                if (!map) {
+                    // Initialize the map with NEW options
+                    map = L.map('popupMap', { 
+                        dragging: true,
+                        scrollWheelZoom: true,
+                        zoomControl: true,
+                        tap: false, // NEW: Disables tap sensitivity to prevent conflicts
+                        touchZoom: true // NEW: Explicitly enables touch zoom
+                    }).setView([15.9, 79.7], 7);
+
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                }
+                
+                setTimeout(function() {
+                    map.invalidateSize();
+                }, 10);
+            });
+
+            // Close the modal
+            closeBtn.onclick = function() {
+                mapModal.style.display = "none";
+            }
+            window.onclick = function(event) {
+                if (event.target == mapModal) {
+                    mapModal.style.display = "none";
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>

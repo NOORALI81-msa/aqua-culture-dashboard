@@ -1,0 +1,27 @@
+{% extends 'layout.html' %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <h1>Login</h1>
+    <div class="auth-links">
+        <a href="{{ url_for('login') }}" class="active">Login</a>
+        <a href="{{ url_for('register') }}">Register</a>
+    </div>
+    <form action="{{ url_for('login') }}" method="post" class="auth-form">
+        <div class="input-group">
+            <i class="fas fa-user"></i>
+            <input type="text" name="username" placeholder="Username" id="username" required>
+        </div>
+        <div class="input-group">
+            <i class="fas fa-lock"></i>
+            <input type="password" name="password" placeholder="Password" id="password" required>
+        </div>
+        {% if msg %}
+        <p class="msg">{{ msg }}</p>
+        {% endif %}
+        <input type="submit" value="Login">
+    </form>
+</div>
+{% endblock %}

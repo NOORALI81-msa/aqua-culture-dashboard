@@ -1,0 +1,51 @@
+{% extends 'layout.html' %}
+{% block title %}Employees{% endblock %}
+{% block content %}
+<div class="content-block">
+    <h2>Employee Management</h2>
+    <p>View and add new employees.</p>
+</div>
+
+<!-- Add Employee Form -->
+<div class="content-block">
+    <h3>Add New Employee</h3>
+    <form action="{{ url_for('employees') }}" method="post" class="styled-form">
+        <input type="text" name="username" placeholder="Username" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <input type="text" name="head_quarter" placeholder="Head Quarter" required>
+        <select name="role">
+            <option value="employee">Employee</option>
+            <option value="manager">Manager</option>
+        </select>
+        <input type="submit" value="Add Employee">
+        {% if msg %}
+        <p class="msg">{{ msg }}</p>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Employee List -->
+<div class="content-block">
+    <h3>Current Employees</h3>
+    <table class="styled-table">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Head Quarter</th>
+                <th>Role</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for employee in employees %}
+            <tr>
+                <td>{{ employee.username }}</td>
+                <td>{{ employee.head_quarter }}</td>
+                <td>{{ employee.role }}</td>
+                <td><span class="status-pill status-{{ employee.status }}">{{ employee.status }}</span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
