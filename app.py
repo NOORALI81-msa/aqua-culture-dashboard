@@ -8,16 +8,25 @@ import datetime
 
 # --- APP CONFIGURATION ---
 app = Flask(__name__)
+
+# Configure a secret key for session management
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'a_very_long_and_random_secret_key')
+
+# --- DIRECT DATABASE CONNECTION ---
 # ⚠️ PASTE YOUR NEW RENDER DATABASE INTERNAL CONNECTION STRING HERE ⚠️
 app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://aqua_db_w5l9_user:KOCJ1ssQ3WsAcDh8omgEMpWKvfGePVCF@dpg-d2brsb7diees73f2l50g-a/aqua_db_w5l9"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Configure the upload folder
 UPLOAD_FOLDER = 'static/uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'pdf'}
+
+# Initialize the database extension
 db = SQLAlchemy(app)
 
-# --- DATABASE MODELS ---
+
+# --- DATABASE MODELS (Matching your aquaculture_db.sql) ---
 class Employee(db.Model):
     __tablename__ = 'employees'
     id = db.Column(db.Integer, primary_key=True)
@@ -67,6 +76,8 @@ class DailyRoute(db.Model):
     entry_time = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow)
     employee = db.relationship('Employee', backref=db.backref('routes', lazy=True))
 
+
+# --- Auto-create Database Tables ---
 with app.app_context():
     db.create_all()
     if not Employee.query.filter_by(username='john').first():
@@ -76,8 +87,12 @@ with app.app_context():
         db.session.commit()
         print("Database tables created and default manager added.")
 
+# --- HELPER FUNCTIONS ---
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# --- ROUTES ---
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -93,7 +108,10 @@ def login():
             account.last_login = datetime.datetime.utcnow()
             account.status = 'active'
             db.session.commit()
-            return redirect(url_for('dashboard') if account.role == 'manager' else url_for('profile'))
+            if account.role == 'manager':
+                return redirect(url_for('dashboard'))
+            else:
+                return redirect(url_for('profile'))
         else:
             flash('Incorrect username/password or account deactivated.', 'danger')
     return render_template('login.html')
@@ -110,7 +128,14 @@ def register():
             flash('Account with that username already exists!', 'warning')
             return render_template('register.html')
         hashed_password = generate_password_hash(password)
-        new_employee = Employee(username=username, password=hashed_password, head_quarter=head_quarter, contact=contact, address=address, role='employee')
+        new_employee = Employee(
+            username=username, 
+            password=hashed_password, 
+            head_quarter=head_quarter, 
+            contact=contact, 
+            address=address,
+            role='employee'
+        )
         db.session.add(new_employee)
         db.session.commit()
         flash('You have successfully registered! Please log in.', 'success')
@@ -152,7 +177,7 @@ def dashboard():
     start_of_today = now.replace(hour=0, minute=0, second=0, microsecond=0)
     sales_this_month = db.session.query(func.sum(Sale.quantity_sold)).filter(Sale.sale_date >= start_of_month).scalar() or 0
     employees_list = Employee.query.all()
-    top_employee_query = db.session.query(Employee.username, func.sum(Sale.quantity_sold)).join(Sale).filter(Sale.sale_date >= start_of_month).group_by(Employee.username).order_by(func.sum(Sale.quantity_sold).desc()).first()
+    top_employee_query = db.session.query(Employee.username, func.sum(Sale.quantity_sold).label('total_sales')).join(Sale).filter(Sale.sale_date >= start_of_month).group_by(Employee.username).order_by(func.sum(Sale.quantity_sold).desc()).first()
     top_employee = {'username': top_employee_query[0]} if top_employee_query else None
     sales_locations = db.session.query(Farmer.latitude, Farmer.longitude, func.sum(Sale.quantity_sold)).join(Sale).filter(Farmer.latitude.isnot(None), Farmer.longitude.isnot(None), Sale.sale_date >= start_of_month).group_by(Farmer.latitude, Farmer.longitude).all()
     sales_geo_data = [[lat, lng, intensity] for lat, lng, intensity in sales_locations]
@@ -255,8 +280,17 @@ def profile():
     total_kms_today = sum(route.kms_segment for route in daily_routes)
     return render_template('profile.html', account=account, daily_routes=daily_routes, total_kms_today=total_kms_today, now=datetime.datetime.now())
 
+# --- UPDATED LOGOUT ROUTE ---
 @app.route('/logout')
 def logout():
+    if 'loggedin' in session:
+        # Find the employee and update their status to inactive
+        employee = Employee.query.get(session['id'])
+        if employee:
+            employee.status = 'inactive'
+            db.session.commit()
+    
+    # Clear the session data
     session.clear()
     flash('You have been logged out.', 'info')
     return redirect(url_for('login'))
