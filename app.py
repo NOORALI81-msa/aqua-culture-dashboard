@@ -10,8 +10,7 @@ import datetime
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'a_very_long_and_random_secret_key')
 # ⚠️ PASTE YOUR NEW RENDER DATABASE INTERNAL CONNECTION STRING HERE ⚠️
-# It must start with 'postgresql://' (all lowercase)
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://aqua_db_wcw4_user:2UEs5vgcbORzlFmzPrg0yPGikw9Feqie@dpg-d2bp1ajuibrs73fr3vl0-a/aqua_db_wcw4"
+app.config['SQLALCHEMY_DATABASE_URI'] = "PASTE_YOUR_NEW_INTERNAL_CONNECTION_STRING_HERE"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 UPLOAD_FOLDER = 'static/uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -122,9 +121,23 @@ def register():
 def forgot_password():
     if request.method == 'POST':
         username = request.form['username']
-        # In a real app, you would email a reset link. Here we just simulate.
-        flash('If an account with that username exists, a reset link has been sent (simulation).', 'info')
-        return redirect(url_for('login'))
+        new_password = request.form['new_password']
+        confirm_password = request.form['confirm_password']
+
+        if new_password != confirm_password:
+            flash('Passwords do not match. Please try again.', 'danger')
+            return redirect(url_for('forgot_password'))
+
+        account = Employee.query.filter_by(username=username).first()
+        if account:
+            account.password = generate_password_hash(new_password)
+            db.session.commit()
+            flash('Your password has been updated successfully! You can now log in.', 'success')
+            return redirect(url_for('login'))
+        else:
+            flash('No account found with that username.', 'danger')
+            return redirect(url_for('forgot_password'))
+            
     return render_template('forgot_password.html')
 
 @app.route('/dashboard')
