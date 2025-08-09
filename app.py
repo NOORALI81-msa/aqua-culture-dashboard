@@ -15,7 +15,7 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'a_very_long_and_random_secre
 # --- DIRECT DATABASE CONNECTION ---
 # ⚠️ PASTE YOUR RENDER DATABASE INTERNAL CONNECTION STRING HERE ⚠️
 # It must start with 'postgresql://' (all lowercase)
-app.config['SQLALCHEMY_DATABASE_URI'] = "PASTE_YOUR_INTERNAL_CONNECTION_STRING_HERE"
+app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://aqua_db_8uu8_user:aBSqQ4FCynDnkx5282Tv3v9d6NNuD5bC@dpg-d2bk4omr433s739sf3ng-a/aqua_db_8uu8"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Configure the upload folder
