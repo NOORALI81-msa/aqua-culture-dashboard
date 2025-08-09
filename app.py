@@ -14,7 +14,7 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'a_default_secret_key_for_dev
 # --- DIRECT DATABASE CONNECTION ---
 # Paste the Internal Connection String you copied from your Render PostgreSQL page here.
 # It should look like: 'postgres://user:password@host/database'
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://aqua_db_8uu8_user:aBSqQ4FCynDnkx5282Tv3v9d6NNuD5bC@dpg-d2bk4omr433s739sf3ng-a/aqua_db_8uu8"
+app.config['SQLALCHEMY_DATABASE_URI'] = "PASTE_YOUR_INTERNAL_CONNECTION_STRING_HERE"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize the database extension
@@ -111,6 +111,43 @@ def login():
         else:
             flash('Incorrect username or password!', 'danger')
     return render_template('login.html')
+
+# --- ADDED THIS FUNCTION TO FIX THE ERROR ---
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    """Handles new user registration."""
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        # Assuming email and head_quarter are also in your register.html form
+        email = request.form.get('email', f'{username}@example.com') # Default email
+        head_quarter = request.form.get('head_quarter', 'HQ_Default') # Default HQ
+
+        # Check if account already exists
+        existing_account = Employee.query.filter_by(username=username).first()
+        if existing_account:
+            flash('Account with that username already exists!', 'warning')
+            return render_template('register.html')
+
+        # Hash the password before saving for security
+        hashed_password = generate_password_hash(password)
+        
+        # Create a new employee (default role is 'employee')
+        new_employee = Employee(
+            username=username, 
+            password=hashed_password, 
+            head_quarter=head_quarter
+        )
+
+        db.session.add(new_employee)
+        db.session.commit()
+
+        flash('You have successfully registered! Please log in.', 'success')
+        return redirect(url_for('login'))
+
+    # Show the registration page on a GET request
+    return render_template('register.html')
+
 
 @app.route('/dashboard')
 def dashboard():
