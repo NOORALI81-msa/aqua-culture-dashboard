@@ -4,70 +4,12 @@
 {% block head %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
 <style>
-    /* Styles for the pop-up modal */
-    .modal {
-        display: none; /* Hidden by default */
-        position: fixed; /* Stay in place */
-        z-index: 1000; /* Sit on top */
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0,0,0,0.6); /* Black w/ opacity */
-        /* Use flexbox for robust centering */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .modal-content {
-        background-color: #fefefe;
-        padding: 20px;
-        border: 1px solid #888;
-        width: 90%;
-        max-width: 1200px;
-        border-radius: 8px;
-        position: relative;
-        max-height: 90vh; /* Prevent modal from being taller than the screen */
-        overflow-y: auto; /* Add a scrollbar only if content overflows */
-    }
-
-    .close-btn {
-        color: #aaa;
-        position: absolute;
-        top: 10px;
-        right: 25px;
-        font-size: 35px;
-        font-weight: bold;
-    }
-
-    .close-btn:hover,
-    .close-btn:focus {
-        color: black;
-        text-decoration: none;
-        cursor: pointer;
-    }
-
-    #popupMap { 
-        height: 70vh; /* 70% of the viewport height */
-        width: 100%;
-        border-radius: 8px; 
-    }
-    
-    .map-button {
-        background-color: var(--primary-color);
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 1rem;
-        font-weight: 500;
-        transition: background-color 0.3s;
-    }
-    .map-button:hover {
-        background-color: var(--primary-hover);
-    }
+    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; }
+    .modal-content { background-color: #fefefe; padding: 20px; border: 1px solid #888; width: 90%; max-width: 1200px; border-radius: 8px; position: relative; max-height: 90vh; overflow-y: auto; }
+    .close-btn { color: #aaa; position: absolute; top: 10px; right: 25px; font-size: 35px; font-weight: bold; cursor: pointer; }
+    #popupMap { height: 70vh; width: 100%; border-radius: 8px; }
+    .map-button { background-color: var(--primary-color); color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: 500; transition: background-color 0.3s; }
+    .map-button:hover { background-color: var(--primary-hover); }
 </style>
 {% endblock %}
 
@@ -133,49 +75,24 @@
     </div>
 </div>
 
-<div class="content-block">
-    <h3>Sales Analytics</h3>
-    <div class="charts-container">
-        <div class="chart-wrapper">
-            <h4>Sales Today by Employee</h4>
-            <canvas id="salesTodayChart"></canvas>
-        </div>
-        <div class="chart-wrapper">
-            <h4>Sales This Month by Employee</h4>
-            <canvas id="salesMonthChart"></canvas>
-        </div>
-    </div>
-</div>
-
 <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // --- Modal and Map Logic ---
     const mapModal = document.getElementById('mapModal');
     const openMapBtn = document.getElementById('openMapBtn');
     const closeBtn = document.querySelector('.close-btn');
-    let map = null; // Initialize map variable to null
+    let map = null;
 
     openMapBtn.addEventListener('click', function() {
-        mapModal.style.display = 'flex'; // Use flex to enable centering styles
-        
-        // Initialize the map only if it hasn't been already
+        mapModal.style.display = 'flex';
         if (!map) {
-            map = L.map('popupMap', { 
-                dragging: true, // This ENABLES sliding/panning the map
-                scrollWheelZoom: true, 
-                zoomControl: true 
-            }).setView([15.9129, 79.7400], 7); // Centered on Andhra Pradesh
-
+            map = L.map('popupMap').setView([20.5937, 78.9629], 5); // Centered on India
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                attribution: '&copy; OpenStreetMap contributors'
             }).addTo(map);
 
-            // CORRECTED LINE
-            const heatPoints = { sales_geo_data , tojson };
+            const heatPoints = {{ sales_geo_data | tojson }};
             if (heatPoints.length > 0) {
                 L.heatLayer(heatPoints, {
                     radius: 25,
@@ -185,33 +102,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 }).addTo(map);
             }
         }
-        
-        // This forces the map to recalculate its size when the modal is shown
-        setTimeout(function() {
-            map.invalidateSize();
-        }, 10);
+        setTimeout(() => map.invalidateSize(), 10);
     });
 
-    // Close the modal
-    closeBtn.onclick = function() {
-        mapModal.style.display = "none";
-    }
-    window.onclick = function(event) {
+    closeBtn.onclick = () => mapModal.style.display = "none";
+    window.onclick = (event) => {
         if (event.target == mapModal) {
             mapModal.style.display = "none";
         }
-    }
-
-    // --- Chart.js scripts ---
-    // CORRECTED LINES
-    const salesTodayData = { sales_today , tojson };
-    const salesMonthData = { sales_month , tojson };
-    
-    const ctxToday = document.getElementById('salesTodayChart').getContext('2d');
-    new Chart(ctxToday, { type: 'bar', data: { labels: salesTodayData.map(item => item.username), datasets: [{ label: 'Total Sales', data: salesTodayData.map(item => item.total_sales), backgroundColor: 'rgba(52, 152, 219, 0.7)' }] }, options: { scales: { y: { beginAtZero: true } } } });
-    
-    const ctxMonth = document.getElementById('salesMonthChart').getContext('2d');
-    new Chart(ctxMonth, { type: 'bar', data: { labels: salesMonthData.map(item => item.username), datasets: [{ label: 'Total Sales', data: salesMonthData.map(item => item.total_sales), backgroundColor: 'rgba(46, 204, 113, 0.7)' }] }, options: { scales: { y: { beginAtZero: true } } } });
+    };
 });
 </script>
 {% endblock %}

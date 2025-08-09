@@ -6,30 +6,22 @@
     <p>Add new farmers and view farmers assigned to you.</p>
 </div>
 
-<!-- Add Farmer Form -->
 <div class="content-block">
     <h3>Add New Farmer</h3>
     <form action="{{ url_for('farmers') }}" method="post" enctype="multipart/form-data" class="styled-form">
-        <!-- Existing Fields -->
         <input type="text" name="farmer_name" placeholder="Farmer Name" required>
         <input type="number" name="num_of_ponds" placeholder="Number of Ponds" required>
-        <input type="text" name="doc" placeholder="Date of Culture (DOC)" optional>
+        <input type="text" name="doc" placeholder="Date of Culture (DOC)">
         <input type="text" name="contact_details" placeholder="Contact Details" required>
-        <input type="text" name="products_using" placeholder="Products Currently Using" optional>
-
-        <!-- New Geo-coordinate Fields -->
-        <input type="text" name="latitude" placeholder="Latitude (e.g., 13.6288)" required>
-        <input type="text" name="longitude" placeholder="Longitude (e.g., 79.4192)" required>
-
+        <input type="text" name="products_using" placeholder="Products Currently Using">
+        <input type="text" name="latitude" placeholder="Latitude (e.g., 13.6288)">
+        <input type="text" name="longitude" placeholder="Longitude (e.g., 79.4192)">
         <label for="visit_proof">Proof of Visit (Image/Doc):</label>
         <input type="file" name="visit_proof" id="visit_proof" accept="image/*,application/pdf" style="grid-column: 1 / -1;">
-        
         <input type="submit" value="Add Farmer" style="grid-column: 1 / -1;">
-        {% if msg %}<p class="msg">{{ msg }}</p>{% endif %}
     </form>
 </div>
 
-<!-- Farmer List (remains the same) -->
 <div class="content-block">
     <h3>Your Farmers</h3>
     <div class="table-container">

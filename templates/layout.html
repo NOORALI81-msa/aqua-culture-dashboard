@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>{% block title %}{% endblock %}</title>
+        <title>{% block title %}{% endblock %} - AquaCulture</title>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -15,25 +15,26 @@
         <nav class="navtop">
             <div>
                 <h1>AquaCulture</h1>
-                <!-- This section will only show if the user is logged in -->
                 {% if 'loggedin' in session %}
-                    
-                    <!-- Manager-specific links -->
                     {% if session.get('role') == 'manager' %}
                         <a href="{{ url_for('dashboard') }}"><i class="fas fa-tachometer-alt"></i>Dashboard</a>
                         <a href="{{ url_for('employees') }}"><i class="fas fa-users"></i>Employees</a>
                     {% endif %}
-                    
-                    <!-- Links for all logged-in users (Employees and Managers) -->
                     <a href="{{ url_for('farmers') }}"><i class="fas fa-tractor"></i>Farmers</a>
                     <a href="{{ url_for('sales') }}"><i class="fas fa-chart-line"></i>Sales</a>
                     <a href="{{ url_for('profile') }}"><i class="fas fa-user-circle"></i>Profile & Status</a>
                     <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i>Logout</a>
-                
                 {% endif %}
             </div>
         </nav>
         <main class="content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
             {% block content %}{% endblock %}
         </main>
     </body>

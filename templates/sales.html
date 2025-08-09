@@ -6,7 +6,6 @@
     <p>Log a new product sale to a farmer.</p>
 </div>
 
-<!-- Record Sale Form -->
 <div class="content-block">
     <h3>New Sale Details</h3>
     <form action="{{ url_for('sales') }}" method="post" class="styled-form">
@@ -20,13 +19,9 @@
         <input type="number" name="quantity_sold" placeholder="Quantity Sold" required>
         <textarea name="prescription" placeholder="Prescription / Notes"></textarea>
         <input type="submit" value="Record Sale">
-        {% if msg %}
-        <p class="msg">{{ msg }}</p>
-        {% endif %}
     </form>
 </div>
 
-<!-- Recent Sales List -->
 <div class="content-block">
     <h3>Your Recent Sales</h3>
     <table class="styled-table">
