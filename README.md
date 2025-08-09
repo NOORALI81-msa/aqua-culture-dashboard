@@ -2,7 +2,7 @@
 
 A full-stack web application built with Python and Flask to provide managers with a real-time dashboard for tracking field employee activity and sales performance.
 
-**Live Demo Link:** [https://aqua-dashboard-demo.onrender.com](https://aqua-dashboard-demo.onrender.com) 🚀
+**Live Demo Link:** [https://aqua-culture-dashboard.onrender.com](https://aqua-culture-dashboard.onrender.com) 🚀
 
 
 
