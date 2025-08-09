@@ -14,7 +14,7 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'a_default_secret_key_for_dev
 # --- DIRECT DATABASE CONNECTION ---
 # Paste the Internal Connection String you copied from your Render PostgreSQL page here.
 # It should look like: 'postgres://user:password@host/database'
-app.config['SQLALCHEMY_DATABASE_URI'] = "PASTE_YOUR_INTERNAL_CONNECTION_STRING_HERE"
+app.config['SQLALCHEMY_DATABASE_URI'] = "Ppostgresql://aqua_db_8uu8_user:aBSqQ4FCynDnkx5282Tv3v9d6NNuD5bC@dpg-d2bk4omr433s739sf3ng-a/aqua_db_8uu8"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize the database extension
