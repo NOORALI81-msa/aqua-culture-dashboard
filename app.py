@@ -13,9 +13,9 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'a_very_long_and_random_secret_key')
 
 # --- DIRECT DATABASE CONNECTION ---
-# ⚠️ PASTE YOUR RENDER DATABASE INTERNAL CONNECTION STRING HERE ⚠️
-# It must start with 'postgresql://' (all lowercase)
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://aqua_db_8uu8_user:aBSqQ4FCynDnkx5282Tv3v9d6NNuD5bC@dpg-d2bk4omr433s739sf3ng-a/aqua_db_8uu8"
+# ⚠️ PASTE YOUR NEW RENDER DATABASE INTERNAL CONNECTION STRING HERE ⚠️
+# The old one is invalid. You must get the new one after re-creating the database.
+app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://aqua_db_efkc_user:rHceaNtWxnZkwyg4576ewE6onYVeoqur@dpg-d2bmuf9r0fns73fror9g-a/aqua_db_efkc"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Configure the upload folder
@@ -137,13 +137,16 @@ def dashboard():
     if 'loggedin' not in session or session.get('role') != 'manager':
         return redirect(url_for('login'))
     
-    total_employees = Employee.query.filter_by(role='employee').count()
-    total_farmers = Farmer.query.count()
+    total_employees = db.session.query(func.count(Employee.id)).filter_by(role='employee').scalar()
+    total_farmers = db.session.query(func.count(Farmer.id)).scalar()
+    
     now = datetime.datetime.utcnow()
     start_of_month = now.replace(day=1, hour=0, minute=0, second=0)
     sales_this_month = db.session.query(func.sum(Sale.quantity_sold)).filter(Sale.sale_date >= start_of_month).scalar() or 0
+    
     employees_list = Employee.query.all()
-    top_employee_query = db.session.query(Employee.username, func.sum(Sale.quantity_sold)).join(Sale).filter(Sale.sale_date >= start_of_month).group_by(Employee.username).order_by(func.sum(Sale.quantity_sold).desc()).first()
+    
+    top_employee_query = db.session.query(Employee.username, func.sum(Sale.quantity_sold).label('total_sales')).join(Sale).filter(Sale.sale_date >= start_of_month).group_by(Employee.username).order_by(func.sum(Sale.quantity_sold).desc()).first()
     top_employee = {'username': top_employee_query[0]} if top_employee_query else None
     
     sales_locations = db.session.query(Farmer.latitude, Farmer.longitude, func.sum(Sale.quantity_sold)).join(Sale).filter(Farmer.latitude.isnot(None), Farmer.longitude.isnot(None), Sale.sale_date >= start_of_month).group_by(Farmer.latitude, Farmer.longitude).all()
