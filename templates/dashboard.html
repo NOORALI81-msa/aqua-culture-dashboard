@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }).addTo(map);
 
             // CORRECTED LINE
-            const heatPoints = {{ sales_geo_data | tojson }};
+            const heatPoints = { sales_geo_data , tojson };
             if (heatPoints.length > 0) {
                 L.heatLayer(heatPoints, {
                     radius: 25,
@@ -204,8 +204,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // --- Chart.js scripts ---
     // CORRECTED LINES
-    const salesTodayData = {{ sales_today | tojson }};
-    const salesMonthData = {{ sales_month | tojson }};
+    const salesTodayData = { sales_today , tojson };
+    const salesMonthData = { sales_month , tojson };
     
     const ctxToday = document.getElementById('salesTodayChart').getContext('2d');
     new Chart(ctxToday, { type: 'bar', data: { labels: salesTodayData.map(item => item.username), datasets: [{ label: 'Total Sales', data: salesTodayData.map(item => item.total_sales), backgroundColor: 'rgba(52, 152, 219, 0.7)' }] }, options: { scales: { y: { beginAtZero: true } } } });
