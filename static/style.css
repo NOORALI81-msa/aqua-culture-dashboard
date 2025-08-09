@@ -12,21 +12,24 @@ body {
     height: 60px;
     width: 100%;
     border-bottom: 1px solid #2c3e50;
-    display: flex;
-    justify-content: center;
 }
-.navtop div {
+.navtop .nav-container {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     width: 100%;
     max-width: 1200px;
+    margin: 0 auto;
     padding: 0 20px;
+    height: 100%;
 }
 .navtop h1 {
     color: #ffffff;
     font-size: 24px;
     margin: 0;
-    flex-grow: 1;
+}
+.nav-links {
+    display: flex;
 }
 .navtop a {
     padding: 0 15px;
@@ -34,13 +37,53 @@ body {
     color: #c5cae9;
     font-weight: 500;
     transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    height: 60px;
 }
 .navtop a:hover {
     color: #ffffff;
+    background-color: #2c3e50;
 }
 .navtop a i {
     padding-right: 8px;
 }
+
+/* Hamburger Menu Icon */
+.menu-toggle {
+    display: none;
+    font-size: 24px;
+    color: white;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+/* Responsive Styles for Mobile */
+@media (max-width: 768px) {
+    .menu-toggle {
+        display: block; /* Show hamburger icon */
+    }
+    .nav-links {
+        display: none; /* Hide links by default */
+        position: absolute;
+        top: 60px;
+        left: 0;
+        width: 100%;
+        background-color: #3a539b;
+        flex-direction: column;
+        text-align: center;
+    }
+    .nav-links.active {
+        display: flex; /* Show links when active */
+    }
+    .navtop a {
+        height: 50px;
+        justify-content: center;
+        border-bottom: 1px solid #2c3e50;
+    }
+}
+
 
 /* Main Content Area */
 .content {
@@ -95,10 +138,11 @@ body {
     color: white;
     font-size: 0.8em;
     font-weight: bold;
+    display: inline-block;
 }
-.status-active { background-color: #27ae60; }
-.status-inactive { background-color: #f39c12; }
-.status-deactivated { background-color: #c0392b; }
+.status-pill.status-active { background-color: #27ae60; }
+.status-pill.status-inactive { background-color: #f39c12; }
+.status-pill.status-deactivated { background-color: #c0392b; }
 
 /* Forms */
 .styled-form {
@@ -127,7 +171,7 @@ body {
     font-size: 1rem;
     font-weight: 500;
     transition: background-color 0.3s;
-    grid-column: 1 / -1; /* Make button span full width */
+    grid-column: 1 / -1;
 }
 .styled-form input[type="submit"]:hover {
     background-color: #2c3e50;
@@ -248,3 +292,13 @@ body {
     color: #c0392b;
     margin-top: 15px;
 }
+.alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+.alert-success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
+.alert-danger { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
+.alert-warning { color: #856404; background-color: #fff3cd; border-color: #ffeeba; }
+.alert-info { color: #0c5460; background-color: #d1ecf1; border-color: #bee5eb; }

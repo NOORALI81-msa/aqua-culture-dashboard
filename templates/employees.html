@@ -12,6 +12,8 @@
         <input type="text" name="username" placeholder="Username" required>
         <input type="password" name="password" placeholder="Password" required>
         <input type="text" name="head_quarter" placeholder="Head Quarter" required>
+        <input type="text" name="contact" placeholder="Contact Number" required>
+        <input type="text" name="address" placeholder="Address" required>
         <select name="role">
             <option value="employee">Employee</option>
             <option value="manager">Manager</option>
@@ -27,6 +29,8 @@
             <tr>
                 <th>Username</th>
                 <th>Head Quarter</th>
+                <th>Contact</th>
+                <th>Address</th>
                 <th>Role</th>
                 <th>Status</th>
             </tr>
@@ -36,6 +40,8 @@
             <tr>
                 <td>{{ employee.username }}</td>
                 <td>{{ employee.head_quarter }}</td>
+                <td>{{ employee.contact or 'N/A' }}</td>
+                <td>{{ employee.address or 'N/A' }}</td>
                 <td>{{ employee.role }}</td>
                 <td><span class="status-pill status-{{ employee.status }}">{{ employee.status }}</span></td>
             </tr>

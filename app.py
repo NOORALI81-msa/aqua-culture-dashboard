@@ -8,24 +8,15 @@ import datetime
 
 # --- APP CONFIGURATION ---
 app = Flask(__name__)
-
-# Configure a secret key for session management
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'a_very_long_and_random_secret_key')
-
-# --- DIRECT DATABASE CONNECTION ---
 # ⚠️ PASTE YOUR NEW RENDER DATABASE INTERNAL CONNECTION STRING HERE ⚠️
-# The old one is invalid. You must get the new one after re-creating the database.
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://aqua_db_efkc_user:rHceaNtWxnZkwyg4576ewE6onYVeoqur@dpg-d2bmuf9r0fns73fror9g-a/aqua_db_efkc"
+# It must start with 'postgresql://' (all lowercase)
+app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://aqua_db_wcw4_user:2UEs5vgcbORzlFmzPrg0yPGikw9Feqie@dpg-d2bp1ajuibrs73fr3vl0-a/aqua_db_wcw4"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# Configure the upload folder
 UPLOAD_FOLDER = 'static/uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'pdf'}
-
-# Initialize the database extension
 db = SQLAlchemy(app)
-
 
 # --- DATABASE MODELS ---
 class Employee(db.Model):
@@ -34,6 +25,8 @@ class Employee(db.Model):
     username = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
     head_quarter = db.Column(db.String(100), nullable=False)
+    contact = db.Column(db.String(50))
+    address = db.Column(db.String(255))
     location = db.Column(db.String(100), default=None)
     kms_covered = db.Column(db.Integer, default=0)
     role = db.Column(db.String(10), nullable=False, default='employee')
@@ -75,8 +68,6 @@ class DailyRoute(db.Model):
     entry_time = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow)
     employee = db.relationship('Employee', backref=db.backref('routes', lazy=True))
 
-
-# --- Auto-create Database Tables ---
 with app.app_context():
     db.create_all()
     if not Employee.query.filter_by(username='john').first():
@@ -86,12 +77,8 @@ with app.app_context():
         db.session.commit()
         print("Database tables created and default manager added.")
 
-# --- HELPER FUNCTIONS ---
 def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-# --- ROUTES ---
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -107,10 +94,7 @@ def login():
             account.last_login = datetime.datetime.utcnow()
             account.status = 'active'
             db.session.commit()
-            if account.role == 'manager':
-                return redirect(url_for('dashboard'))
-            else:
-                return redirect(url_for('profile'))
+            return redirect(url_for('dashboard') if account.role == 'manager' else url_for('profile'))
         else:
             flash('Incorrect username/password or account deactivated.', 'danger')
     return render_template('login.html')
@@ -121,16 +105,27 @@ def register():
         username = request.form['username']
         password = request.form['password']
         head_quarter = request.form['head_quarter']
+        contact = request.form['contact']
+        address = request.form['address']
         if Employee.query.filter_by(username=username).first():
             flash('Account with that username already exists!', 'warning')
             return render_template('register.html')
         hashed_password = generate_password_hash(password)
-        new_employee = Employee(username=username, password=hashed_password, head_quarter=head_quarter, role='employee')
+        new_employee = Employee(username=username, password=hashed_password, head_quarter=head_quarter, contact=contact, address=address, role='employee')
         db.session.add(new_employee)
         db.session.commit()
         flash('You have successfully registered! Please log in.', 'success')
         return redirect(url_for('login'))
     return render_template('register.html')
+
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        username = request.form['username']
+        # In a real app, you would email a reset link. Here we just simulate.
+        flash('If an account with that username exists, a reset link has been sent (simulation).', 'info')
+        return redirect(url_for('login'))
+    return render_template('forgot_password.html')
 
 @app.route('/dashboard')
 def dashboard():
@@ -139,24 +134,25 @@ def dashboard():
     
     total_employees = db.session.query(func.count(Employee.id)).filter_by(role='employee').scalar()
     total_farmers = db.session.query(func.count(Farmer.id)).scalar()
-    
     now = datetime.datetime.utcnow()
     start_of_month = now.replace(day=1, hour=0, minute=0, second=0)
+    start_of_today = now.replace(hour=0, minute=0, second=0, microsecond=0)
     sales_this_month = db.session.query(func.sum(Sale.quantity_sold)).filter(Sale.sale_date >= start_of_month).scalar() or 0
-    
     employees_list = Employee.query.all()
-    
-    top_employee_query = db.session.query(Employee.username, func.sum(Sale.quantity_sold).label('total_sales')).join(Sale).filter(Sale.sale_date >= start_of_month).group_by(Employee.username).order_by(func.sum(Sale.quantity_sold).desc()).first()
+    top_employee_query = db.session.query(Employee.username, func.sum(Sale.quantity_sold)).join(Sale).filter(Sale.sale_date >= start_of_month).group_by(Employee.username).order_by(func.sum(Sale.quantity_sold).desc()).first()
     top_employee = {'username': top_employee_query[0]} if top_employee_query else None
-    
     sales_locations = db.session.query(Farmer.latitude, Farmer.longitude, func.sum(Sale.quantity_sold)).join(Sale).filter(Farmer.latitude.isnot(None), Farmer.longitude.isnot(None), Sale.sale_date >= start_of_month).group_by(Farmer.latitude, Farmer.longitude).all()
     sales_geo_data = [[lat, lng, intensity] for lat, lng, intensity in sales_locations]
+    sales_today_query = db.session.query(Employee.username, func.sum(Sale.quantity_sold)).join(Sale).filter(Sale.sale_date >= start_of_today).group_by(Employee.username).all()
+    sales_today_data = [{'username': username, 'total_sales': total} for username, total in sales_today_query]
+    sales_month_query = db.session.query(Employee.username, func.sum(Sale.quantity_sold)).join(Sale).filter(Sale.sale_date >= start_of_month).group_by(Employee.username).all()
+    sales_month_data = [{'username': username, 'total_sales': total} for username, total in sales_month_query]
 
     return render_template(
         'dashboard.html',
         username=session['username'], total_employees=total_employees, total_farmers=total_farmers,
         sales_this_month=sales_this_month, top_employee=top_employee, employees=employees_list,
-        sales_today=[], sales_month=[], sales_geo_data=sales_geo_data
+        sales_today=sales_today_data, sales_month=sales_month_data, sales_geo_data=sales_geo_data
     )
 
 @app.route('/employees', methods=['GET', 'POST'])
@@ -168,9 +164,11 @@ def employees():
         password = request.form['password']
         head_quarter = request.form['head_quarter']
         role = request.form['role']
+        contact = request.form['contact']
+        address = request.form['address']
         if not Employee.query.filter_by(username=username).first():
             hashed_password = generate_password_hash(password)
-            new_employee = Employee(username=username, password=hashed_password, head_quarter=head_quarter, role=role)
+            new_employee = Employee(username=username, password=hashed_password, head_quarter=head_quarter, role=role, contact=contact, address=address)
             db.session.add(new_employee)
             db.session.commit()
             flash('Employee added successfully!', 'success')
@@ -204,23 +202,11 @@ def farmers():
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
                 visit_proof_filename = filename
-
-        new_farmer = Farmer(
-            employee_id=session['id'],
-            farmer_name=request.form['farmer_name'],
-            num_of_ponds=request.form['num_of_ponds'],
-            doc=request.form['doc'],
-            contact_details=request.form['contact_details'],
-            products_using=request.form['products_using'],
-            latitude=request.form.get('latitude'),
-            longitude=request.form.get('longitude'),
-            visit_proof_path=visit_proof_filename
-        )
+        new_farmer = Farmer(employee_id=session['id'], farmer_name=request.form['farmer_name'], num_of_ponds=request.form['num_of_ponds'], doc=request.form['doc'], contact_details=request.form['contact_details'], products_using=request.form['products_using'], latitude=request.form.get('latitude'), longitude=request.form.get('longitude'), visit_proof_path=visit_proof_filename)
         db.session.add(new_farmer)
         db.session.commit()
         flash('Farmer added successfully!', 'success')
         return redirect(url_for('farmers'))
-
     user_farmers = Farmer.query.filter_by(employee_id=session['id']).all()
     return render_template('farmers.html', farmers=user_farmers)
 
@@ -228,22 +214,13 @@ def farmers():
 def sales():
     if 'loggedin' not in session:
         return redirect(url_for('login'))
-    
     farmers_list = Farmer.query.filter_by(employee_id=session['id']).all()
-    
     if request.method == 'POST':
-        new_sale = Sale(
-            employee_id=session['id'],
-            farmer_id=request.form['farmer_id'],
-            product_name=request.form['product_name'],
-            quantity_sold=request.form['quantity_sold'],
-            prescription=request.form.get('prescription')
-        )
+        new_sale = Sale(employee_id=session['id'], farmer_id=request.form['farmer_id'], product_name=request.form['product_name'], quantity_sold=request.form['quantity_sold'], prescription=request.form.get('prescription'))
         db.session.add(new_sale)
         db.session.commit()
         flash('Sale recorded successfully!', 'success')
         return redirect(url_for('sales'))
-        
     sales_with_farmer = db.session.query(Sale, Farmer.farmer_name).join(Farmer).filter(Sale.employee_id==session['id']).order_by(Sale.sale_date.desc()).limit(20).all()
     recent_sales_formatted = [{'sale_date': s.sale_date, 'farmer_name': fn, 'product_name': s.product_name, 'quantity_sold': s.quantity_sold} for s, fn in sales_with_farmer]
     return render_template('sales.html', farmers=farmers_list, recent_sales=recent_sales_formatted)
@@ -252,25 +229,17 @@ def sales():
 def profile():
     if 'loggedin' not in session:
         return redirect(url_for('login'))
-    
     account = Employee.query.get(session['id'])
-    
     if request.method == 'POST':
-        new_route = DailyRoute(
-            employee_id=session['id'],
-            location_segment=request.form['location'],
-            kms_segment=request.form['kms_covered']
-        )
+        new_route = DailyRoute(employee_id=session['id'], location_segment=request.form['location'], kms_segment=request.form['kms_covered'])
         db.session.add(new_route)
         account.kms_covered = (account.kms_covered or 0) + int(request.form['kms_covered'])
         db.session.commit()
         flash('Route segment added!', 'success')
         return redirect(url_for('profile'))
-
     today_start = datetime.datetime.combine(datetime.date.today(), datetime.time.min)
     daily_routes = DailyRoute.query.filter(DailyRoute.employee_id == session['id'], DailyRoute.entry_time >= today_start).all()
     total_kms_today = sum(route.kms_segment for route in daily_routes)
-    
     return render_template('profile.html', account=account, daily_routes=daily_routes, total_kms_today=total_kms_today, now=datetime.datetime.now())
 
 @app.route('/logout')

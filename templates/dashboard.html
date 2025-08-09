@@ -4,19 +4,7 @@
 {% block head %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
 <style>
-    /* Styles for the pop-up modal */
-    .modal {
-        display: none; /* Hidden by default - This is the only display rule needed here */
-        position: fixed;
-        z-index: 1000;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0,0,0,0.6);
-        align-items: center; /* These are for when it becomes a flex container via JS */
-        justify-content: center;
-    }
+    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center; }
     .modal-content { background-color: #fefefe; padding: 20px; border: 1px solid #888; width: 90%; max-width: 1200px; border-radius: 8px; position: relative; max-height: 90vh; overflow-y: auto; }
     .close-btn { color: #aaa; position: absolute; top: 10px; right: 25px; font-size: 35px; font-weight: bold; cursor: pointer; }
     #popupMap { height: 70vh; width: 100%; border-radius: 8px; }
@@ -33,6 +21,23 @@
     }
     .map-button:hover {
         background-color: #2c3e50;
+    }
+    .charts-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-top: 20px;
+    }
+    .chart-wrapper {
+        background: #fdfdfd;
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #eee;
+    }
+    @media (max-width: 768px) {
+        .charts-container {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 {% endblock %}
@@ -99,8 +104,23 @@
     </div>
 </div>
 
+<div class="content-block">
+    <h3>Sales Analytics</h3>
+    <div class="charts-container">
+        <div class="chart-wrapper">
+            <h4>Sales Today by Employee</h4>
+            <canvas id="salesTodayChart"></canvas>
+        </div>
+        <div class="chart-wrapper">
+            <h4>Sales This Month by Employee</h4>
+            <canvas id="salesMonthChart"></canvas>
+        </div>
+    </div>
+</div>
+
 <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const mapModal = document.getElementById('mapModal');
@@ -109,32 +129,40 @@ document.addEventListener('DOMContentLoaded', function () {
     let map = null;
 
     openMapBtn.addEventListener('click', function() {
-        mapModal.style.display = 'flex'; // This correctly SHOWS the modal
+        mapModal.style.display = 'flex';
         if (!map) {
-            map = L.map('popupMap').setView([20.5937, 78.9629], 5); // Centered on India
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OpenStreetMap contributors'
-            }).addTo(map);
-
+            map = L.map('popupMap').setView([20.5937, 78.9629], 5);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
             const heatPoints = {{ sales_geo_data | tojson }};
             if (heatPoints.length > 0) {
-                L.heatLayer(heatPoints, {
-                    radius: 25,
-                    blur: 15,
-                    maxZoom: 12,
-                    gradient: {0.4: 'blue', 0.65: 'lime', 1: 'red'}
-                }).addTo(map);
+                L.heatLayer(heatPoints, { radius: 25, blur: 15, maxZoom: 12, gradient: {0.4: 'blue', 0.65: 'lime', 1: 'red'} }).addTo(map);
             }
         }
         setTimeout(() => map.invalidateSize(), 10);
     });
-
     closeBtn.onclick = () => mapModal.style.display = "none";
-    window.onclick = (event) => {
-        if (event.target == mapModal) {
-            mapModal.style.display = "none";
-        }
-    };
+    window.onclick = (event) => { if (event.target == mapModal) mapModal.style.display = "none"; };
+
+    const salesTodayData = {{ sales_today | tojson }};
+    const salesMonthData = {{ sales_month | tojson }};
+
+    new Chart(document.getElementById('salesTodayChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: salesTodayData.map(item => item.username),
+            datasets: [{ label: 'Total Sales Quantity', data: salesTodayData.map(item => item.total_sales), backgroundColor: 'rgba(54, 162, 235, 0.6)' }]
+        },
+        options: { scales: { y: { beginAtZero: true } } }
+    });
+
+    new Chart(document.getElementById('salesMonthChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: salesMonthData.map(item => item.username),
+            datasets: [{ label: 'Total Sales Quantity', data: salesMonthData.map(item => item.total_sales), backgroundColor: 'rgba(75, 192, 192, 0.6)' }]
+        },
+        options: { scales: { y: { beginAtZero: true } } }
+    });
 });
 </script>
 {% endblock %}

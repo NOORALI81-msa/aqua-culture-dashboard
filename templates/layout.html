@@ -13,17 +13,24 @@
     </head>
     <body>
         <nav class="navtop">
-            <div>
+            <div class="nav-container">
                 <h1>AquaCulture</h1>
-                {% if 'loggedin' in session %}
-                    {% if session.get('role') == 'manager' %}
-                        <a href="{{ url_for('dashboard') }}"><i class="fas fa-tachometer-alt"></i>Dashboard</a>
-                        <a href="{{ url_for('employees') }}"><i class="fas fa-users"></i>Employees</a>
+                <div class="nav-links" id="nav-links">
+                    {% if 'loggedin' in session %}
+                        {% if session.get('role') == 'manager' %}
+                            <a href="{{ url_for('dashboard') }}"><i class="fas fa-tachometer-alt"></i>Dashboard</a>
+                            <a href="{{ url_for('employees') }}"><i class="fas fa-users"></i>Employees</a>
+                        {% endif %}
+                        <a href="{{ url_for('farmers') }}"><i class="fas fa-tractor"></i>Farmers</a>
+                        <a href="{{ url_for('sales') }}"><i class="fas fa-chart-line"></i>Sales</a>
+                        <a href="{{ url_for('profile') }}"><i class="fas fa-user-circle"></i>Profile & Status</a>
+                        <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i>Logout</a>
                     {% endif %}
-                    <a href="{{ url_for('farmers') }}"><i class="fas fa-tractor"></i>Farmers</a>
-                    <a href="{{ url_for('sales') }}"><i class="fas fa-chart-line"></i>Sales</a>
-                    <a href="{{ url_for('profile') }}"><i class="fas fa-user-circle"></i>Profile & Status</a>
-                    <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i>Logout</a>
+                </div>
+                {% if 'loggedin' in session %}
+                <button class="menu-toggle" id="menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
                 {% endif %}
             </div>
         </nav>
@@ -37,5 +44,15 @@
             {% endwith %}
             {% block content %}{% endblock %}
         </main>
+        <script>
+            // JavaScript for the mobile menu
+            const menuToggle = document.getElementById('menu-toggle');
+            const navLinks = document.getElementById('nav-links');
+            if (menuToggle) {
+                menuToggle.addEventListener('click', () => {
+                    navLinks.classList.toggle('active');
+                });
+            }
+        </script>
     </body>
 </html>
