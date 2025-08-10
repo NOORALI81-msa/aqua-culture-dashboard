@@ -11,7 +11,7 @@
     <form action="{{ url_for('farmers') }}" method="post" enctype="multipart/form-data" class="styled-form">
         <input type="text" name="farmer_name" placeholder="Farmer Name" required>
         <input type="number" name="num_of_ponds" placeholder="Number of Ponds" required>
-        <input type="date" name="doc" placeholder="Date of Culture (DOC)">
+        <input type="date" name="doc" placeholder="Date of Culture (YYYY-MM-DD)">
         <input type="text" name="contact_details" placeholder="Contact Details" required>
         <input type="text" name="products_using" placeholder="Products Currently Using">
         <textarea name="notes" placeholder="Prescription / Notes"></textarea>
@@ -36,7 +36,7 @@
                     <th>Ponds</th>
                     <th>Contact</th>
                     <th>Days of Culture</th>
-                    <th>Notes</th>
+                    <th>Prescription / Notes</th>
                 </tr>
             </thead>
             <tbody>
@@ -53,6 +53,8 @@
                         {% endif %}
                     </td>
                     <td>{{ farmer.notes }}</td>
+                    <td>
+                        <a href="{{ url_for('farmer_details', farmer_id=farmer.id) }}" class="view-details">View Details</a>
                 </tr>
                 {% endfor %}
             </tbody>
