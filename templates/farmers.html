@@ -11,13 +11,17 @@
     <form action="{{ url_for('farmers') }}" method="post" enctype="multipart/form-data" class="styled-form">
         <input type="text" name="farmer_name" placeholder="Farmer Name" required>
         <input type="number" name="num_of_ponds" placeholder="Number of Ponds" required>
-        <input type="text" name="doc" placeholder="Date of Culture (DOC)">
+        <input type="date" name="doc" placeholder="Date of Culture (DOC)">
         <input type="text" name="contact_details" placeholder="Contact Details" required>
         <input type="text" name="products_using" placeholder="Products Currently Using">
-        <input type="text" name="latitude" placeholder="Latitude (e.g., 13.6288)">
-        <input type="text" name="longitude" placeholder="Longitude (e.g., 79.4192)">
-        <label for="visit_proof">Proof of Visit (Image/Doc):</label>
-        <input type="file" name="visit_proof" id="visit_proof" accept="image/*,application/pdf" style="grid-column: 1 / -1;">
+        <textarea name="notes" placeholder="Prescription / Notes"></textarea>
+        
+        <div class="form-group" style="grid-column: 1 / -1; display: flex; gap: 10px; align-items: center;">
+            <input type="text" name="latitude" id="latitude" placeholder="Latitude">
+            <input type="text" name="longitude" id="longitude" placeholder="Longitude">
+            <button type="button" id="getLocationBtn" class="map-button" style="padding: 12px;">Get Location</button>
+        </div>
+        
         <input type="submit" value="Add Farmer" style="grid-column: 1 / -1;">
     </form>
 </div>
@@ -31,8 +35,8 @@
                     <th>Farmer Name</th>
                     <th>Ponds</th>
                     <th>Contact</th>
-                    <th>Products Using</th>
-                    <th>DOC</th>
+                    <th>Days of Culture</th>
+                    <th>Notes</th>
                 </tr>
             </thead>
             <tbody>
@@ -41,12 +45,33 @@
                     <td>{{ farmer.farmer_name }}</td>
                     <td>{{ farmer.num_of_ponds }}</td>
                     <td>{{ farmer.contact_details }}</td>
-                    <td>{{ farmer.products_using }}</td>
-                    <td>{{ farmer.doc }}</td>
+                    <td>
+                        {% if farmer.doc %}
+                            {{ (today - farmer.doc).days }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    <td>{{ farmer.notes }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+
+<script>
+document.getElementById('getLocationBtn').addEventListener('click', function() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            document.getElementById('latitude').value = position.coords.latitude.toFixed(6);
+            document.getElementById('longitude').value = position.coords.longitude.toFixed(6);
+        }, function() {
+            alert('Error: The Geolocation service failed.');
+        });
+    } else {
+        alert('Error: Your browser doesn\'t support geolocation.');
+    }
+});
+</script>
 {% endblock %}

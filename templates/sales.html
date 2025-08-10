@@ -2,13 +2,48 @@
 {% block title %}Sales{% endblock %}
 {% block content %}
 <div class="content-block">
-    <h2>Record a Sale</h2>
-    <p>Log a new product sale to a farmer.</p>
+    <h2>Sales & Dealer Management</h2>
+    <p>Record sales to farmers and dealers, and manage your list of dealers.</p>
 </div>
 
+<!-- Add Dealer Form -->
 <div class="content-block">
-    <h3>New Sale Details</h3>
+    <h3>Add New Dealer</h3>
     <form action="{{ url_for('sales') }}" method="post" class="styled-form">
+        <input type="hidden" name="form_type" value="add_dealer">
+        <input type="text" name="dealer_name" placeholder="Dealer Name" required>
+        <input type="text" name="shop_name" placeholder="Shop Name">
+        <input type="text" name="address" placeholder="Address">
+        <input type="submit" value="Add Dealer">
+    </form>
+</div>
+
+<!-- Record Sale to Dealer Form -->
+<div class="content-block">
+    <h3>Record New Sale to Dealer</h3>
+    <form action="{{ url_for('sales') }}" method="post" class="styled-form">
+        <input type="hidden" name="form_type" value="dealer_sale">
+        <select name="dealer_id" required>
+            <option value="" disabled selected>-- Select a Dealer --</option>
+            {% for dealer in dealers %}
+            <option value="{{ dealer.id }}">{{ dealer.name }} ({{ dealer.shop_name }})</option>
+            {% endfor %}
+        </select>
+        <input type="text" name="product_name" placeholder="Product Name" required>
+        <input type="text" name="packing" placeholder="Packing (e.g., 1kg, 5L)">
+        <input type="number" name="pacs_per_case" placeholder="Packs per Case">
+        <input type="number" step="0.01" id="mrp" name="mrp_per_pack" placeholder="MRP/Pack (₹)" required>
+        <input type="number" step="0.01" id="discount_percent" name="discount_percentage" placeholder="% Discount" required>
+        <input type="number" step="0.01" id="discount_amount" name="discount_amount" placeholder="Discount Amount (₹)" readonly>
+        <input type="submit" value="Record Dealer Sale">
+    </form>
+</div>
+
+<!-- Record Sale to Farmer Form -->
+<div class="content-block">
+    <h3>Record New Sale to Farmer</h3>
+    <form action="{{ url_for('sales') }}" method="post" class="styled-form">
+        <input type="hidden" name="form_type" value="farmer_sale">
         <select name="farmer_id" required>
             <option value="" disabled selected>-- Select a Farmer --</option>
             {% for farmer in farmers %}
@@ -18,31 +53,67 @@
         <input type="text" name="product_name" placeholder="Product Name (e.g., Drug A)" required>
         <input type="number" name="quantity_sold" placeholder="Quantity Sold" required>
         <textarea name="prescription" placeholder="Prescription / Notes"></textarea>
-        <input type="submit" value="Record Sale">
+        <input type="submit" value="Record Farmer Sale">
     </form>
 </div>
 
+
+<!-- Recent Sales List -->
 <div class="content-block">
     <h3>Your Recent Sales</h3>
     <table class="styled-table">
         <thead>
             <tr>
                 <th>Date</th>
-                <th>Farmer</th>
+                <th>Sold To</th>
                 <th>Product</th>
-                <th>Quantity</th>
+                <th>Details</th>
             </tr>
         </thead>
         <tbody>
-            {% for sale in recent_sales %}
+            {% for sale, farmer_name, dealer_name in recent_sales %}
             <tr>
                 <td>{{ sale.sale_date.strftime('%Y-%m-%d') }}</td>
-                <td>{{ sale.farmer_name }}</td>
+                <td>
+                    {% if farmer_name %}
+                        Farmer: {{ farmer_name }}
+                    {% elif dealer_name %}
+                        Dealer: {{ dealer_name }}
+                    {% endif %}
+                </td>
                 <td>{{ sale.product_name }}</td>
-                <td>{{ sale.quantity_sold }}</td>
+                <td>
+                    {% if sale.quantity_sold %}
+                        Qty: {{ sale.quantity_sold }}
+                    {% else %}
+                        MRP: ₹{{ '%.2f'|format(sale.mrp_per_pack) }}, Disc: {{ sale.discount_percentage }}%
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const mrpInput = document.getElementById('mrp');
+    const discountPercentInput = document.getElementById('discount_percent');
+    const discountAmountInput = document.getElementById('discount_amount');
+
+    function calculateDiscount() {
+        const mrp = parseFloat(mrpInput.value);
+        const percent = parseFloat(discountPercentInput.value);
+        if (!isNaN(mrp) && !isNaN(percent)) {
+            const amount = (mrp * percent) / 100;
+            discountAmountInput.value = amount.toFixed(2);
+        } else {
+            discountAmountInput.value = '';
+        }
+    }
+
+    if (mrpInput) mrpInput.addEventListener('input', calculateDiscount);
+    if (discountPercentInput) discountPercentInput.addEventListener('input', calculateDiscount);
+});
+</script>
 {% endblock %}
