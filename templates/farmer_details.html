@@ -1,0 +1,51 @@
+{% extends 'layout.html' %}
+{% block title %}Farmer Details{% endblock %}
+{% block content %}
+
+<div class="content-block">
+    <h2>Details for {{ farmer.farmer_name }}</h2>
+    <a href="{{ url_for('farmers') }}" class="btn" style="display: inline-block; margin-bottom: 20px;">&larr; Back to Farmers List</a>
+</div>
+
+<div class="content-block">
+    <table class="styled-table">
+        <tbody>
+            <tr>
+                <td><strong>Farmer Name:</strong></td>
+                <td>{{ farmer.farmer_name }}</td>
+            </tr>
+            <tr>
+                <td><strong>Number of Ponds:</strong></td>
+                <td>{{ farmer.num_of_ponds }}</td>
+            </tr>
+            <tr>
+                <td><strong>Contact Details:</strong></td>
+                <td>{{ farmer.contact_details }}</td>
+            </tr>
+            <tr>
+                <td><strong>Date of Culture (DOC):</strong></td>
+                <td>{{ farmer.doc.strftime('%d %b, %Y') if farmer.doc else 'N/A' }}</td>
+            </tr>
+            <tr>
+                <td><strong>Products Currently Using:</strong></td>
+                <td>{{ farmer.products_using }}</td>
+            </tr>
+            <tr>
+                <td><strong>GPS Location:</strong></td>
+                <td>
+                    {% if farmer.latitude and farmer.longitude %}
+                        Lat: {{ farmer.latitude }}, Lon: {{ farmer.longitude }}
+                        <a href="https://www.google.com/maps/search/?api=1&query={{ farmer.latitude }},{{ farmer.longitude }}" target="_blank" style="margin-left: 10px;">View on Map</a>
+                    {% else %}
+                        Not Provided
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><strong>Prescription / Notes:</strong></td>
+                <td>{{ farmer.notes | nl2br if farmer.notes else 'No notes added.' }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}
