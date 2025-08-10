@@ -10,7 +10,7 @@ import datetime
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'a_very_long_and_random_secret_key')
 # ⚠️ PASTE YOUR NEW RENDER DATABASE INTERNAL CONNECTION STRING HERE ⚠️
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://aqua_db_1f5m_user:JcQKM8fmJYqVbloMPF7NMmwJeUBJOE9I@dpg-d2c3t76r433s73aa6580-a/aqua_db_1f5m"
+app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://aqua_db_4d32_user:Kfmp21y8Qk6nDR79JZj1RGCbddvqUnTO@dpg-d2c4a4qdbo4c73bbugcg-a/aqua_db_4d32"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 UPLOAD_FOLDER = 'static/uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
