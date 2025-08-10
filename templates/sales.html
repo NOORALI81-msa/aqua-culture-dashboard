@@ -6,10 +6,10 @@
     <p>Record sales to farmers and dealers, and manage your list of dealers.</p>
 </div>
 
-<!-- Add Dealer Form -->
 <div class="content-block">
     <h3>Add New Dealer</h3>
     <form action="{{ url_for('sales') }}" method="post" class="styled-form">
+        <input type="hidden" name="form_type" value="add_dealer">
         <input type="text" name="dealer_name" placeholder="Dealer Name" required>
         <input type="text" name="shop_name" placeholder="Shop Name">
         <input type="text" name="address" placeholder="Address">
@@ -17,10 +17,10 @@
     </form>
 </div>
 
-<!-- Record Sale to Dealer Form -->
 <div class="content-block">
     <h3>Record New Sale to Dealer</h3>
     <form action="{{ url_for('sales') }}" method="post" class="styled-form">
+        <input type="hidden" name="form_type" value="dealer_sale">
         <select name="dealer_id" required>
             <option value="" disabled selected>-- Select a Dealer --</option>
             {% for dealer in dealers %}
@@ -37,10 +37,10 @@
     </form>
 </div>
 
-<!-- Record Sale to Farmer Form -->
 <div class="content-block">
     <h3>Record New Sale to Farmer</h3>
     <form action="{{ url_for('sales') }}" method="post" class="styled-form">
+        <input type="hidden" name="form_type" value="farmer_sale">
         <select name="farmer_id" required>
             <option value="" disabled selected>-- Select a Farmer --</option>
             {% for farmer in farmers %}
@@ -55,7 +55,6 @@
 </div>
 
 
-<!-- Recent Sales List -->
 <div class="content-block">
     <h3>Your Recent Sales</h3>
     <table class="styled-table">

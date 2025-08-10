@@ -9,15 +9,15 @@ import datetime
 # --- APP CONFIGURATION ---
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'a_very_long_and_random_secret_key')
-# ⚠️ PASTE YOUR NEW RENDER DATABASE INTERNAL CONNECTION STRING HERE ⚠️
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://aqua_db_4d32_user:Kfmp21y8Qk6nDR79JZj1RGCbddvqUnTO@dpg-d2c4a4qdbo4c73bbugcg-a/aqua_db_4d32"
+# Make sure this is your Render internal database connection string
+app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://aqua_db_x2az_user:aweFyG7IWDKPje56eKy9NbVTlU2zeYNb@dpg-d2c4mubuibrs7384bs3g-a/aqua_db_x2az"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 UPLOAD_FOLDER = 'static/uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'pdf'}
 db = SQLAlchemy(app)
 
-# --- DATABASE MODELS (UPDATED) ---
+# --- DATABASE MODELS ---
 class Employee(db.Model):
     __tablename__ = 'employees'
     id = db.Column(db.Integer, primary_key=True)
@@ -36,13 +36,13 @@ class Farmer(db.Model):
     employee_id = db.Column(db.Integer, db.ForeignKey('employees.id'), nullable=False)
     farmer_name = db.Column(db.String(100), nullable=False)
     num_of_ponds = db.Column(db.Integer, nullable=False)
-    doc = db.Column(db.Date) # CHANGED to Date for calculation
+    doc = db.Column(db.Date)
     contact_details = db.Column(db.String(100), nullable=False)
     products_using = db.Column(db.String(255), nullable=False)
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
     visit_proof_path = db.Column(db.String(255), default=None)
-    notes = db.Column(db.Text) # NEW notes field
+    notes = db.Column(db.Text)
     employee = db.relationship('Employee', backref=db.backref('farmers', lazy=True))
 
 class Dealer(db.Model):
@@ -54,29 +54,21 @@ class Dealer(db.Model):
     employee_id = db.Column(db.Integer, db.ForeignKey('employees.id'), nullable=False)
     employee = db.relationship('Employee', backref=db.backref('dealers', lazy=True))
 
-# UPDATED Sale model to handle both Farmer and Dealer sales
 class Sale(db.Model):
     __tablename__ = 'sales'
     id = db.Column(db.Integer, primary_key=True)
     employee_id = db.Column(db.Integer, db.ForeignKey('employees.id'), nullable=False)
-    
-    # One of these will be filled, the other will be null
     farmer_id = db.Column(db.Integer, db.ForeignKey('farmers.id'), nullable=True)
     dealer_id = db.Column(db.Integer, db.ForeignKey('dealers.id'), nullable=True)
-
     product_name = db.Column(db.String(100), nullable=False)
-    quantity_sold = db.Column(db.Integer, nullable=True) # For farmer sales
-    prescription = db.Column(db.Text, nullable=True) # For farmer sales
-
-    # Fields for dealer sales
+    quantity_sold = db.Column(db.Integer, nullable=True)
+    prescription = db.Column(db.Text, nullable=True)
     packing = db.Column(db.String(50))
     pacs_per_case = db.Column(db.Integer)
     mrp_per_pack = db.Column(db.Float)
     discount_percentage = db.Column(db.Float)
     discount_amount = db.Column(db.Float)
-    
     sale_date = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow)
-    
     employee = db.relationship('Employee', backref=db.backref('sales', lazy=True))
     dealer = db.relationship('Dealer', backref=db.backref('sales', lazy=True))
     farmer = db.relationship('Farmer', backref=db.backref('sales', lazy=True))
@@ -90,7 +82,7 @@ class DailyRoute(db.Model):
     entry_time = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow)
     employee = db.relationship('Employee', backref=db.backref('routes', lazy=True))
 
-
+# --- DATABASE INITIALIZATION ---
 with app.app_context():
     db.create_all()
     if not Employee.query.filter_by(username='john').first():
@@ -104,7 +96,6 @@ with app.app_context():
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
-    # ... (code is correct, no changes needed)
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -122,6 +113,43 @@ def login():
             flash('Incorrect username/password or account deactivated.', 'danger')
     return render_template('login.html')
 
+# NEW ROUTE TO FIX THE CRASH
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if 'loggedin' in session:
+        return redirect(url_for('profile'))
+
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        head_quarter = request.form['head_quarter']
+        contact = request.form.get('contact')
+        address = request.form.get('address')
+
+        existing_account = Employee.query.filter_by(username=username).first()
+        if existing_account:
+            flash('An account with this username already exists.', 'danger')
+            return render_template('register.html')
+
+        hashed_password = generate_password_hash(password)
+        new_employee = Employee(
+            username=username,
+            password=hashed_password,
+            head_quarter=head_quarter,
+            contact=contact,
+            address=address,
+            role='employee',
+            status='inactive'
+        )
+        db.session.add(new_employee)
+        db.session.commit()
+
+        flash('Registration successful! Please log in.', 'success')
+        return redirect(url_for('login'))
+
+    return render_template('register.html')
+
+
 @app.route('/dashboard')
 def dashboard():
     if 'loggedin' not in session or session.get('role') != 'manager':
@@ -131,21 +159,23 @@ def dashboard():
     total_farmers = db.session.query(func.count(Farmer.id)).scalar()
     now = datetime.datetime.utcnow()
     start_of_month = now.replace(day=1, hour=0, minute=0, second=0)
-    # Sales this month is now based on total discount amount for dealer sales
     sales_this_month = db.session.query(func.sum(Sale.discount_amount * Sale.pacs_per_case)).filter(Sale.sale_date >= start_of_month, Sale.dealer_id.isnot(None)).scalar() or 0
     employees_list = Employee.query.all()
     top_employee_query = db.session.query(Employee.username, func.sum(Sale.discount_amount * Sale.pacs_per_case).label('total_sales')).join(Sale).filter(Sale.sale_date >= start_of_month, Sale.dealer_id.isnot(None)).group_by(Employee.username).order_by(func.sum(Sale.discount_amount * Sale.pacs_per_case).desc()).first()
     top_employee = {'username': top_employee_query[0]} if top_employee_query else None
     
-    # Map data is now based on farmer locations
     sales_locations = db.session.query(Farmer.latitude, Farmer.longitude, func.count(Farmer.id)).filter(Farmer.latitude.isnot(None), Farmer.longitude.isnot(None)).group_by(Farmer.latitude, Farmer.longitude).all()
     sales_geo_data = [[lat, lng, count] for lat, lng, count in sales_locations]
+
+    # Placeholder data for charts if you need it
+    sales_today = []
+    sales_month = []
 
     return render_template(
         'dashboard.html',
         username=session['username'], total_employees=total_employees, total_farmers=total_farmers,
         sales_this_month=f'{sales_this_month:,.2f}', top_employee=top_employee, employees=employees_list,
-        sales_geo_data=sales_geo_data
+        sales_geo_data=sales_geo_data, sales_today=sales_today, sales_month=sales_month
     )
 
 @app.route('/farmers', methods=['GET', 'POST'])
@@ -187,7 +217,6 @@ def sales():
         return redirect(url_for('login'))
     
     if request.method == 'POST':
-        # Use a hidden input to determine which form was submitted
         form_type = request.form.get('form_type')
 
         if form_type == 'add_dealer':
@@ -255,7 +284,6 @@ def profile():
     today_start = datetime.datetime.combine(datetime.date.today(), datetime.time.min)
     daily_routes_utc = DailyRoute.query.filter(DailyRoute.employee_id == session['id'], DailyRoute.entry_time >= today_start).all()
     
-    # Convert UTC time to IST for display
     ist_offset = datetime.timedelta(hours=5, minutes=30)
     daily_routes_ist = []
     for route in daily_routes_utc:
@@ -277,7 +305,6 @@ def logout():
     flash('You have been logged out.', 'info')
     return redirect(url_for('login'))
 
-# ... (other routes like /employees are correct and don't need changes) ...
 @app.route('/employees', methods=['GET', 'POST'])
 def employees():
     if 'loggedin' not in session or session.get('role') != 'manager':
