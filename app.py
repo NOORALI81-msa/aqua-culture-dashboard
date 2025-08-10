@@ -10,7 +10,7 @@ import datetime
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'a_very_long_and_random_secret_key')
 # ⚠️ REMINDER: Make sure this is your NEWEST internal connection string from Render
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', "YOUR_DATABASE_CONNECTION_STRING_HERE")
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL", "postgresql://aqua_db_d67h_user:CgUxlFrMAugCQEUlZqFtxn7HshIKbGWM@dpg-d2c51mbuibrs7384lte0-a/aqua_db_d67h")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
