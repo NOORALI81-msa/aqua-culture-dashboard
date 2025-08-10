@@ -8,13 +8,13 @@
     <h2>Your Profile</h2>
     {% if account %}
     <table class="styled-table">
-        <tbody>
-            <tr><td><strong>Username:</strong></td><td>{{ account['username'] }}</td></tr>
-            <tr><td><strong>Role:</strong></td><td>{{ account['role'] }}</td></tr>
-            <tr><td><strong>Head Quarter:</strong></td><td>{{ account['head_quarter'] }}</td></tr>
-            <tr><td><strong>Status:</strong></td><td><span class="status-pill status-{{ account['status'] }}">{{ account['status'] }}</span></td></tr>
-        </tbody>
-    </table>
+    <tbody>
+        <tr><td><strong>Username:</strong></td><td>{{ account.username }}</td></tr>
+        <tr><td><strong>Role:</strong></td><td>{{ account.role }}</td></tr>
+        <tr><td><strong>Head Quarter:</strong></td><td>{{ account.head_quarter }}</td></tr>
+        <tr><td><strong>Status:</strong></td><td><span class="status-pill status-{{ account.status }}">{{ account.status }}</span></td></tr>
+    </tbody>
+</table>
     {% else %}
     <p>Could not retrieve account details.</p>
     {% endif %}

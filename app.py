@@ -3,18 +3,16 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func, cast, Date
 from werkzeug.security import generate_password_hash, check_password_hash
-from werkzeug.utils import secure_filename
 import datetime
 
 # --- APP CONFIGURATION ---
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'a_very_long_and_random_secret_key')
-# ⚠️ REMINDER: Make sure this is your NEWEST internal connection string from Render
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL", "postgresql://aqua_db_d67h_user:CgUxlFrMAugCQEUlZqFtxn7HshIKbGWM@dpg-d2c51mbuibrs7384lte0-a/aqua_db_d67h")
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', "postgresql://aqua_db_whhd_user:kLmox5PxigU2zpBK96naPV2MomVsYrUZ@dpg-d2c68m3uibrs7385qomg-a/aqua_db_whhd")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# --- DATABASE MODELS (No changes needed) ---
+# --- DATABASE MODELS ---
 class Employee(db.Model):
     __tablename__ = 'employees'
     id = db.Column(db.Integer, primary_key=True)
@@ -41,7 +39,6 @@ class Farmer(db.Model):
     notes = db.Column(db.Text)
     employee = db.relationship('Employee', backref=db.backref('farmers', lazy=True))
 
-# ... (Other models: Dealer, Sale, DailyRoute are unchanged and correct) ...
 class Dealer(db.Model):
     __tablename__ = 'dealers'
     id = db.Column(db.Integer, primary_key=True)
@@ -79,7 +76,6 @@ class DailyRoute(db.Model):
     entry_time = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow)
     employee = db.relationship('Employee', backref=db.backref('routes', lazy=True))
 
-
 # --- DATABASE INITIALIZATION ---
 with app.app_context():
     db.create_all()
@@ -88,13 +84,11 @@ with app.app_context():
         manager = Employee(username='john', password=hashed_password, head_quarter='HQ1', role='manager', status='active')
         db.session.add(manager)
         db.session.commit()
-        print("Database tables created and default manager added.")
 
-# --- ROUTES (with all fixes) ---
+# --- ROUTES ---
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
-    # This route is correct.
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -112,7 +106,6 @@ def login():
             flash('Incorrect username/password or account deactivated.', 'danger')
     return render_template('login.html')
 
-# (The 'register' route is also correct from the previous fix)
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if 'loggedin' in session:
@@ -135,19 +128,15 @@ def register():
         return redirect(url_for('login'))
     return render_template('register.html')
 
-
-# ### NEW FUNCTION 1: FIXES THE MAIN CRASH ###
 @app.route('/forgot_password', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
         username = request.form['username']
         new_password = request.form['new_password']
         confirm_password = request.form['confirm_password']
-
         if new_password != confirm_password:
             flash('New passwords do not match. Please try again.', 'danger')
             return redirect(url_for('forgot_password'))
-
         account = Employee.query.filter_by(username=username).first()
         if account:
             hashed_password = generate_password_hash(new_password)
@@ -158,62 +147,82 @@ def forgot_password():
         else:
             flash('Username not found. Please check and try again.', 'danger')
             return redirect(url_for('forgot_password'))
-
     return render_template('forgot_password.html')
 
+# ### THIS IS THE CORRECTED FUNCTION ###
 @app.route('/dashboard')
 def dashboard():
-    # This route is correct
     if 'loggedin' not in session or session.get('role') != 'manager':
         return redirect(url_for('login'))
-    
-    # Subquery to get the latest route for each employee
-    latest_route_sq = db.session.query(
-        DailyRoute.employee_id,
-        func.max(DailyRoute.entry_time).label('max_time')
-    ).group_by(DailyRoute.employee_id).subquery()
 
-    # Main query to get employee data
-    employees_with_data = db.session.query(
-        Employee,
-        DailyRoute.location_segment,
-        func.sum(DailyRoute.kms_segment).label('total_kms')
-    ).outerjoin(DailyRoute, Employee.id == DailyRoute.employee_id)\
-    .group_by(Employee.id, DailyRoute.location_segment)\
-    .order_by(Employee.username).all()
+    # --- Employee Progress Logic (Simplified and Corrected) ---
+    employees = Employee.query.order_by(Employee.username).all()
+    today_start = datetime.datetime.combine(datetime.date.today(), datetime.time.min)
 
-    # Process data to get unique employees with their latest location and total kms
-    employees_list = []
-    processed_ids = set()
-    for employee, location, kms in employees_with_data:
-        if employee.id not in processed_ids:
-            # Find latest location for this employee
-            latest_location_query = db.session.query(DailyRoute.location_segment)\
-                .filter(DailyRoute.employee_id == employee.id)\
-                .order_by(DailyRoute.entry_time.desc()).first()
-            employee.location = latest_location_query[0] if latest_location_query else None
-            
-            # Find total KMs for today
-            today_start = datetime.datetime.combine(datetime.date.today(), datetime.time.min)
-            total_kms_today = db.session.query(func.sum(DailyRoute.kms_segment))\
-                .filter(DailyRoute.employee_id == employee.id, DailyRoute.entry_time >= today_start).scalar()
-            employee.kms_covered = total_kms_today or 0
-            
-            employees_list.append(employee)
-            processed_ids.add(employee.id)
+    for emp in employees:
+        # Get last known location for each employee
+        last_route = db.session.query(DailyRoute.location_segment)\
+            .filter(DailyRoute.employee_id == emp.id)\
+            .order_by(DailyRoute.entry_time.desc()).first()
+        emp.location = last_route[0] if last_route else 'N/A'
 
+        # Get total KMs covered today for each employee
+        total_kms = db.session.query(func.sum(DailyRoute.kms_segment))\
+            .filter(
+                DailyRoute.employee_id == emp.id,
+                DailyRoute.entry_time >= today_start
+            ).scalar()
+        emp.kms_covered = total_kms or 0
+
+    # --- KPI and Chart Logic ---
     total_employees = Employee.query.filter_by(role='employee').count()
     total_farmers = Farmer.query.count()
     
-    # ... other dashboard logic ...
-    return render_template('dashboard.html', employees=employees_list, total_employees=total_employees, total_farmers=total_farmers, username=session.get('username'))
+    now = datetime.datetime.utcnow()
+    start_of_month = now.replace(day=1, hour=0, minute=0, second=0)
 
-# ### NEW FUNCTION 2: FIXES THE "DEACTIVATE" LINK ###
+    sales_this_month_val = db.session.query(func.sum(Sale.quantity_sold))\
+        .filter(Sale.sale_date >= start_of_month).scalar() or 0
+
+    top_employee_query = db.session.query(Employee)\
+        .join(Sale, Employee.id == Sale.employee_id)\
+        .filter(Sale.sale_date >= start_of_month)\
+        .group_by(Employee.id).order_by(func.sum(Sale.quantity_sold).desc()).first()
+    top_employee = top_employee_query if top_employee_query else None
+
+    sales_locations = Farmer.query.filter(Farmer.latitude.isnot(None), Farmer.longitude.isnot(None)).all()
+    sales_geo_data = [[f.latitude, f.longitude, 1] for f in sales_locations]
+
+    # Chart Data
+    sales_today_data = db.session.query(Employee.username, func.sum(Sale.quantity_sold).label('total_sales'))\
+        .join(Sale, Employee.id == Sale.employee_id)\
+        .filter(cast(Sale.sale_date, Date) == datetime.date.today())\
+        .group_by(Employee.username).all()
+    sales_today = [{'username': r.username, 'total_sales': r.total_sales or 0} for r in sales_today_data]
+
+    sales_month_data = db.session.query(Employee.username, func.sum(Sale.quantity_sold).label('total_sales'))\
+        .join(Sale, Employee.id == Sale.employee_id)\
+        .filter(Sale.sale_date >= start_of_month)\
+        .group_by(Employee.username).all()
+    sales_month = [{'username': r.username, 'total_sales': r.total_sales or 0} for r in sales_month_data]
+    
+    return render_template(
+        'dashboard.html',
+        username=session.get('username'),
+        employees=employees,
+        total_employees=total_employees,
+        total_farmers=total_farmers,
+        sales_this_month=sales_this_month_val,
+        top_employee=top_employee,
+        sales_geo_data=sales_geo_data,
+        sales_today=sales_today,
+        sales_month=sales_month
+    )
+
 @app.route('/deactivate_employee/<int:employee_id>')
 def deactivate_employee(employee_id):
     if 'loggedin' not in session or session.get('role') != 'manager':
         return redirect(url_for('login'))
-    
     employee_to_deactivate = Employee.query.get(employee_id)
     if employee_to_deactivate and employee_to_deactivate.role != 'manager':
         employee_to_deactivate.status = 'deactivated'
@@ -221,26 +230,18 @@ def deactivate_employee(employee_id):
         flash(f"Employee '{employee_to_deactivate.username}' has been deactivated.", 'success')
     else:
         flash('Cannot deactivate this employee.', 'danger')
-        
     return redirect(url_for('dashboard'))
 
-
-# ### NEW FUNCTION 3: FIXES THE "VIEW DETAILS" LINK ###
 @app.route('/farmer_details/<int:farmer_id>')
 def farmer_details(farmer_id):
     if 'loggedin' not in session:
         return redirect(url_for('login'))
-        
     farmer = Farmer.query.get_or_404(farmer_id)
-    # Ensure employee can only see their own farmers (or manager can see all)
     if session.get('role') != 'manager' and farmer.employee_id != session.get('id'):
         flash('You do not have permission to view this farmer.', 'danger')
         return redirect(url_for('farmers'))
-
     return render_template('farmer_details.html', farmer=farmer)
 
-
-# ... (The routes for 'farmers', 'sales', 'profile', 'logout', 'employees' are all correct) ...
 @app.route('/farmers', methods=['GET', 'POST'])
 def farmers():
     if 'loggedin' not in session:
@@ -254,23 +255,11 @@ def farmers():
             except ValueError:
                 flash('Invalid date format for DOC. Please use YYYY-MM-DD.', 'danger')
                 return redirect(url_for('farmers'))
-
-        new_farmer = Farmer(
-            employee_id=session['id'],
-            farmer_name=request.form['farmer_name'],
-            num_of_ponds=request.form['num_of_ponds'],
-            doc=doc_date,
-            contact_details=request.form['contact_details'],
-            products_using=request.form['products_using'],
-            latitude=request.form.get('latitude') or None,
-            longitude=request.form.get('longitude') or None,
-            notes=request.form.get('notes')
-        )
+        new_farmer = Farmer(employee_id=session['id'], farmer_name=request.form['farmer_name'], num_of_ponds=request.form['num_of_ponds'], doc=doc_date, contact_details=request.form['contact_details'], products_using=request.form['products_using'], latitude=request.form.get('latitude') or None, longitude=request.form.get('longitude') or None, notes=request.form.get('notes'))
         db.session.add(new_farmer)
         db.session.commit()
         flash('Farmer added successfully!', 'success')
         return redirect(url_for('farmers'))
-
     user_farmers = Farmer.query.filter_by(employee_id=session['id']).all()
     return render_template('farmers.html', farmers=user_farmers, today=datetime.date.today())
 
@@ -278,34 +267,27 @@ def farmers():
 def sales():
     if 'loggedin' not in session:
         return redirect(url_for('login'))
-    
     if request.method == 'POST':
         form_type = request.form.get('form_type')
-
         if form_type == 'add_dealer':
             new_dealer = Dealer(name=request.form['dealer_name'], shop_name=request.form['shop_name'], address=request.form['address'], employee_id=session['id'])
             db.session.add(new_dealer)
             db.session.commit()
             flash('Dealer added successfully!', 'success')
-        
         elif form_type == 'dealer_sale':
             new_sale = Sale(employee_id=session['id'], dealer_id=request.form['dealer_id'], product_name=request.form['product_name'], packing=request.form['packing'], pacs_per_case=request.form['pacs_per_case'], mrp_per_pack=request.form['mrp_per_pack'], discount_percentage=request.form['discount_percentage'], discount_amount=request.form['discount_amount'])
             db.session.add(new_sale)
             db.session.commit()
             flash('Sale to dealer recorded successfully!', 'success')
-        
         elif form_type == 'farmer_sale':
             new_sale = Sale(employee_id=session['id'], farmer_id=request.form['farmer_id'], product_name=request.form['product_name'], quantity_sold=request.form['quantity_sold'], prescription=request.form.get('prescription'))
             db.session.add(new_sale)
             db.session.commit()
             flash('Sale to farmer recorded successfully!', 'success')
-        
         return redirect(url_for('sales'))
-        
     dealers_list = Dealer.query.filter_by(employee_id=session['id']).all()
     farmers_list = Farmer.query.filter_by(employee_id=session['id']).all()
     recent_sales = db.session.query(Sale, Farmer.farmer_name, Dealer.name).outerjoin(Farmer).outerjoin(Dealer).filter(Sale.employee_id==session['id']).order_by(Sale.sale_date.desc()).limit(20).all()
-
     return render_template('sales.html', dealers=dealers_list, farmers=farmers_list, recent_sales=recent_sales)
 
 @app.route('/profile', methods=['GET', 'POST'])
@@ -319,18 +301,14 @@ def profile():
         db.session.commit()
         flash('Route segment added!', 'success')
         return redirect(url_for('profile'))
-
     today_start = datetime.datetime.combine(datetime.date.today(), datetime.time.min)
     daily_routes_utc = DailyRoute.query.filter(DailyRoute.employee_id == session['id'], DailyRoute.entry_time >= today_start).all()
-    
     ist_offset = datetime.timedelta(hours=5, minutes=30)
     daily_routes_ist = []
     for route in daily_routes_utc:
         route.entry_time = route.entry_time + ist_offset
         daily_routes_ist.append(route)
-
     total_kms_today = sum(route.kms_segment for route in daily_routes_ist)
-    
     return render_template('profile.html', account=account, daily_routes=daily_routes_ist, total_kms_today=total_kms_today, now=datetime.datetime.now() + ist_offset)
     
 @app.route('/logout')
@@ -364,10 +342,8 @@ def employees():
         else:
             flash('Employee with that username already exists.', 'danger')
         return redirect(url_for('employees'))
-    
     all_employees = Employee.query.all()
     return render_template('employees.html', employees=all_employees)
-
 
 if __name__ == '__main__':
     app.run(debug=True)
